@@ -92,6 +92,7 @@ class DashboardController extends Controller
                 'jenis_proses'         => $mesin->jenis_proses,
                 'lokasi'               => $mesin->lokasi,
                 'nomor_permintaan'     => $permintaan?->nomor_permintaan ?? '-',
+                'permintaan_id' => $permintaan?->permintaan_id,
                 'jenis_produk'         => $permintaan?->jenis_produk     ?? '-',
                 'tanggal_po'           => $tracking?->tanggal_po
                                             ?? $permintaan?->tanggal_permintaan,

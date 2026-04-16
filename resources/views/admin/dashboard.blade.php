@@ -152,10 +152,11 @@
                             <td>
                                 @if($mesin['po_mekanik_count'] > 0)
                                     <div class="d-flex flex-column gap-1">
-                                        <span class="buyer-badge buyer-mek">
+                                        <a href="{{ route('admin.permintaan.show', $mesin['mesin_id']) }}"
+                                        class="buyer-badge buyer-mek text-decoration-none">
                                             <i class="bi bi-wrench me-1"></i>
                                             {{ $mesin['po_mekanik_count'] }} part
-                                        </span>
+                                        </a>
                                         <small class="text-muted" style="font-size:0.7rem; line-height:1.3;">
                                             {{ $mesin['po_mekanik'] }}
                                         </small>
@@ -166,13 +167,15 @@
                             </td>
 
                             {{-- PO Elektrikal --}}
+                            {{-- PO Elektrikal --}}
                             <td>
                                 @if($mesin['po_elektrikal_count'] > 0)
                                     <div class="d-flex flex-column gap-1">
-                                        <span class="buyer-badge buyer-elek">
+                                    <a href="{{ route('admin.permintaan.show', $mesin['mesin_id']) }}"
+                                    class="buyer-badge buyer-elek text-decoration-none">
                                             <i class="bi bi-lightning me-1"></i>
                                             {{ $mesin['po_elektrikal_count'] }} part
-                                        </span>
+                                        </a>
                                         <small class="text-muted" style="font-size:0.7rem; line-height:1.3;">
                                             {{ $mesin['po_elektrikal'] }}
                                         </small>
@@ -182,28 +185,78 @@
                                 @endif
                             </td>
 
-                            {{-- Assy Mekanik (tanggal_actual dari schedule) --}}
+                            {{-- Assy Mekanik (EDITABLE) --}}
                             <td>
-                                @if($mesin['assy_mekanik'])
-                                    <span class="date-chip date-chip-orange">
-                                        <i class="bi bi-wrench me-1"></i>
-                                        {{ \Carbon\Carbon::parse($mesin['assy_mekanik'])->format('d/m/Y') }}
-                                    </span>
-                                @else
-                                    <span class="text-muted">—</span>
-                                @endif
+                                <div class="editable-date-cell" id="assy-mekanik-display-{{ $mesin['mesin_id'] }}">
+                                    @if($mesin['assy_mekanik'])
+                                        <span class="date-chip date-chip-orange">
+                                            <i class="bi bi-wrench me-1"></i>
+                                            {{ \Carbon\Carbon::parse($mesin['assy_mekanik'])->format('d/m/Y') }}
+                                        </span>
+                                    @else
+                                        <span class="empty-date-btn"
+                                            onclick="openDateEdit('{{ $mesin['mesin_id'] }}', 'assy-mekanik')">
+                                            <i class="bi bi-plus-circle me-1"></i>Set Tanggal
+                                        </span>
+                                    @endif
+                                    <button class="btn-edit-date ms-1"
+                                            onclick="openDateEdit('{{ $mesin['mesin_id'] }}', 'assy-mekanik')"
+                                            title="Edit tanggal assy mekanik">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                </div>
+                                <div class="date-input-wrap" id="assy-mekanik-input-{{ $mesin['mesin_id'] }}" style="display:none;">
+                                    <input type="date" class="form-control form-control-sm"
+                                        id="assy-mekanik-val-{{ $mesin['mesin_id'] }}"
+                                        value="{{ $mesin['assy_mekanik'] ?? '' }}">
+                                    <div class="d-flex gap-1 mt-1">
+                                        <button class="btn btn-xs btn-primary"
+                                                onclick="saveDate('{{ $mesin['mesin_id'] }}', 'assy-mekanik')">
+                                            <i class="bi bi-check"></i>
+                                        </button>
+                                        <button class="btn btn-xs btn-light border"
+                                                onclick="cancelDateEdit('{{ $mesin['mesin_id'] }}', 'assy-mekanik')">
+                                            <i class="bi bi-x"></i>
+                                        </button>
+                                    </div>
+                                </div>
                             </td>
 
-                            {{-- Assy Elektrikal (tanggal_actual dari schedule) --}}
+                            {{-- Assy Elektrikal (EDITABLE) --}}
                             <td>
-                                @if($mesin['assy_elektrikal'])
-                                    <span class="date-chip date-chip-purple">
-                                        <i class="bi bi-lightning me-1"></i>
-                                        {{ \Carbon\Carbon::parse($mesin['assy_elektrikal'])->format('d/m/Y') }}
-                                    </span>
-                                @else
-                                    <span class="text-muted">—</span>
-                                @endif
+                                <div class="editable-date-cell" id="assy-elektrikal-display-{{ $mesin['mesin_id'] }}">
+                                    @if($mesin['assy_elektrikal'])
+                                        <span class="date-chip date-chip-purple">
+                                            <i class="bi bi-lightning me-1"></i>
+                                            {{ \Carbon\Carbon::parse($mesin['assy_elektrikal'])->format('d/m/Y') }}
+                                        </span>
+                                    @else
+                                        <span class="empty-date-btn"
+                                            onclick="openDateEdit('{{ $mesin['mesin_id'] }}', 'assy-elektrikal')">
+                                            <i class="bi bi-plus-circle me-1"></i>Set Tanggal
+                                        </span>
+                                    @endif
+                                    <button class="btn-edit-date ms-1"
+                                            onclick="openDateEdit('{{ $mesin['mesin_id'] }}', 'assy-elektrikal')"
+                                            title="Edit tanggal assy elektrikal">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                </div>
+                                <div class="date-input-wrap" id="assy-elektrikal-input-{{ $mesin['mesin_id'] }}" style="display:none;">
+                                    <input type="date" class="form-control form-control-sm"
+                                        id="assy-elektrikal-val-{{ $mesin['mesin_id'] }}"
+                                        value="{{ $mesin['assy_elektrikal'] ?? '' }}">
+                                    <div class="d-flex gap-1 mt-1">
+                                        <button class="btn btn-xs btn-primary"
+                                                onclick="saveDate('{{ $mesin['mesin_id'] }}', 'assy-elektrikal')">
+                                            <i class="bi bi-check"></i>
+                                        </button>
+                                        <button class="btn btn-xs btn-light border"
+                                                onclick="cancelDateEdit('{{ $mesin['mesin_id'] }}', 'assy-elektrikal')">
+                                            <i class="bi bi-x"></i>
+                                        </button>
+                                    </div>
+                                </div>
                             </td>
 
                             {{-- Trial / Install (EDITABLE) --}}
@@ -578,9 +631,17 @@
         const val = document.getElementById(type + '-val-' + mesinId).value;
 
         const body = {};
-        body['tanggal_' + type] = val;
 
-        fetch(`/admin/dashboard/tracking/${trackingId}`, {
+        const fieldMap = {
+            'assy-mekanik': 'assy_mekanik',
+            'assy-elektrikal': 'assy_elektrikal',
+            'trial': 'tanggal_trial',
+            'delivery': 'tanggal_delivery'
+        };
+
+        body[fieldMap[type]] = val;
+
+        fetch(`/admin/dashboard/tracking/${mesinId}`, {
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',
@@ -594,8 +655,19 @@
                 // Update tampilan chip
                 const displayEl = document.getElementById(type + '-display-' + mesinId);
                 const formatted = val ? formatDate(val) : '—';
-                const icons     = { trial: 'bi-tools', delivery: 'bi-truck' };
-                const colors    = { trial: 'date-chip-green', delivery: 'date-chip-teal' };
+                const icons = {
+                    'assy-mekanik': 'bi-wrench',
+                    'assy-elektrikal': 'bi-lightning',
+                    'trial': 'bi-tools',
+                    'delivery': 'bi-truck'
+                };
+
+                const colors = {
+                    'assy-mekanik': 'date-chip-orange',
+                    'assy-elektrikal': 'date-chip-purple',
+                    'trial': 'date-chip-green',
+                    'delivery': 'date-chip-teal'
+                };
 
                 if (val) {
                     displayEl.innerHTML = `

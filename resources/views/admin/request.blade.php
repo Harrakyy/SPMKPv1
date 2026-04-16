@@ -922,5 +922,16 @@ function submitAddPart() {
         new bootstrap.Modal(document.getElementById('addRequestModal')).show();
     });
     @endif
+
+    @isset($open_permintaan)
+document.addEventListener('DOMContentLoaded', function () {
+    showPartListing(
+        '{{ $open_permintaan->nomor_permintaan }}',
+        '{{ addslashes($open_permintaan->jenis_produk) }}',
+        {{ $open_permintaan->permintaan_id }}
+    );
+});
+@endisset
+
 </script>
 @endpush

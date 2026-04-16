@@ -65,13 +65,21 @@ class PermintaanController extends Controller
     | SHOW — Detail permintaan beserta part list
     |--------------------------------------------------------------------------
     */
-    public function show(string $id)
-    {
-        $permintaan = Permintaan::with(['user', 'partLists'])
-            ->findOrFail($id);
+public function show(string $id)
+{
+    $permintaan = Permintaan::with(['user', 'partLists'])
+        ->findOrFail($id);
 
-        return view('admin.request', compact('permintaan'));
-    }
+    // Load halaman request, langsung buka part listing via JS
+    $allPermintaan = Permintaan::with(['user', 'partLists'])
+        ->orderBy('tanggal_permintaan', 'desc')
+        ->paginate();
+
+    return view('admin.request', [
+        'permintaan'      => $allPermintaan,
+        'open_permintaan' => $permintaan, // untuk auto-open part listing
+    ]);
+}
 
     /*
     |--------------------------------------------------------------------------

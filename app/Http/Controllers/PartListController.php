@@ -7,6 +7,7 @@ use App\Models\Permintaan;
 use App\Models\Mesin;
 use App\Models\User;
 use Illuminate\Http\Request;
+use App\Models\ProductionTracking;
 
 class PartListController extends Controller
 {
@@ -48,9 +49,9 @@ class PartListController extends Controller
     | STORE
     |--------------------------------------------------------------------------
     */
-    public function store(Request $request)
+public function store(Request $request)
 {
-    $validated = $request->validate([
+    $request->validate([
         'permintaan_id'   => 'required|exists:permintaan,permintaan_id',
         'nama_part'       => 'required|string|max:150',
         'material'        => 'nullable|string|max:100',
@@ -62,12 +63,17 @@ class PartListController extends Controller
         'status_part'     => 'required|in:draft,belum_dibeli,dibeli,indent,ready',
     ]);
 
-    $validated['kode_part'] = PartList::generateKodePart($request->permintaan_id);
+    $data              = $request->all();
+    $data['kode_part'] = PartList::generateKodePart($request->permintaan_id);
 
-    // ✅ Pisah create dan cek hasilnya
-    $part = new PartList();
-    $part->fill($validated);
-    $part->save();
+    $part = PartList::create($data);
+
+    // Sync count ke production_trackings
+    $tracking = ProductionTracking::where('permintaan_id', $request->permintaan_id)->first();
+    if ($tracking) {
+        $tracking->load('permintaan.partLists');
+        $tracking->syncFromPartLists();
+    }
 
     if ($request->ajax() || $request->wantsJson()) {
         return response()->json([
@@ -77,9 +83,34 @@ class PartListController extends Controller
         ]);
     }
 
+    $role = auth()->user()->role;
+
+    if ($role === 'engineer') {
+        return redirect()->route('engineer.parts.index')
+            ->with('success', 'Part berhasil ditambahkan.');
+    }
+
     return redirect()->route('admin.permintaan.index')
         ->with('success', 'Part berhasil ditambahkan.');
 }
+
+    private function syncPartCount($permintaanId)
+    {
+        // Hitung jumlah part berdasarkan kategori 'purchase'
+        $countMekanik = PartList::where('permintaan_id', $permintaanId)
+            ->where('purchase', 'mechanic')
+            ->count();
+
+        $countElectric = PartList::where('permintaan_id', $permintaanId)
+            ->where('purchase', 'electric')
+            ->count();
+
+        // Update ke tabel production_trackings
+        ProductionTracking::where('permintaan_id', $permintaanId)->update([
+            'po_mekanik_count'    => $countMekanik,
+            'po_elektrikal_count' => $countElectric,
+        ]);
+    }
 
     /*
     |--------------------------------------------------------------------------
@@ -150,26 +181,33 @@ class PartListController extends Controller
     | DESTROY
     |--------------------------------------------------------------------------
     */
-    public function destroy(PartList $partList)
-    {
-        // Support AJAX delete (dari request.blade.php)
-        if (request()->ajax() || request()->wantsJson()) {
-            $partList->delete();
-            return response()->json(['success' => true]);
-        }
+public function destroy(PartList $partList)
+{
+    $permintaanId = $partList->permintaan_id;
 
-        $partList->delete();
+    $partList->delete();
 
-        $role = auth()->user()->role;
+    // Sync setelah hapus
+    $tracking = ProductionTracking::where('permintaan_id', $permintaanId)->first();
+    if ($tracking) {
+        $tracking->load('permintaan.partLists');
+        $tracking->syncFromPartLists();
+    }
 
-        if ($role === 'engineer') {
-            return redirect()->route('engineer.parts.index')
-                ->with('success', 'Part berhasil dihapus.');
-        }
+    if (request()->ajax() || request()->wantsJson()) {
+        return response()->json(['success' => true]);
+    }
 
-        return redirect()->route('admin.permintaan.index')
+    $role = auth()->user()->role;
+
+    if ($role === 'engineer') {
+        return redirect()->route('engineer.parts.index')
             ->with('success', 'Part berhasil dihapus.');
     }
+
+    return redirect()->route('admin.permintaan.index')
+        ->with('success', 'Part berhasil dihapus.');
+}
 
     /*
     |--------------------------------------------------------------------------

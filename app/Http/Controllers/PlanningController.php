@@ -7,6 +7,7 @@ use App\Models\PartList;
 use App\Models\Permintaan;
 use App\Models\ProsesMfg;
 use Illuminate\Http\Request;
+use App\Models\ProductionTracking;
 
 class PlanningController extends Controller
 {
@@ -119,6 +120,41 @@ public function index()
             'tanggal_actual' => $request->tanggal_actual,
             'partlist_id'  => $request->partlist_id ?? $activity->partlist_id,
         ]);
+
+        if ($activity->tanggal_actual && $activity->partlist_id) {
+        
+        // Ambil data tracking untuk mesin terkait
+        $tracking = \App\Models\ProductionTracking::where('mesin_id', $activity->mesin_id)->first();
+        
+        // Ambil data part untuk mengecek kolom 'purchase'
+        $part = $activity->partList;
+
+if ($activity->tanggal_actual && $activity->partlist_id) {
+        
+        // Ambil record tracking untuk mesin ini
+        $tracking = ProductionTracking::where('mesin_id', $activity->mesin_id)->first();
+        
+        // Ambil data part untuk mengecek kolom 'purchase'
+        $part = $activity->partList; 
+
+        if ($tracking && $part) {
+            $kategori = strtolower($part->purchase); // Isinya 'mechanic' atau 'electric'
+
+            if ($kategori === 'mechanic') {
+                $tracking->update([
+                    'tanggal_assy_mekanik' => $activity->tanggal_actual,
+                    'assy_mekanik_status'  => 'selesai'
+                ]);
+            } 
+            elseif ($kategori === 'electric') {
+                $tracking->update([
+                    'tanggal_assy_elektrikal' => $activity->tanggal_actual,
+                    'assy_elektrikal_status'  => 'selesai'
+                ]);
+            }
+        }
+    }
+    }
 
         return redirect()->route('admin.planning.show', $activity->mesin_id)
             ->with('success', 'Activity berhasil diperbarui.');

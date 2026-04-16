@@ -40,7 +40,7 @@ Route::get('/', function () {
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
 
     Route::get('/dashboard', [DashboardController::class, 'admin'])->name('dashboard');
-    Route::patch('/admin/dashboard/tracking/{tracking_id}', [DashboardController::class, 'updateTracking']);
+    Route::patch('/dashboard/tracking/{tracking_id}', [DashboardController::class, 'updateTracking']);
     Route::post('/admin/dashboard/tracking/{tracking_id}/sync-po', [DashboardController::class, 'syncPo']);
 
     // Mesin Management

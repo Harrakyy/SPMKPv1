@@ -49,40 +49,37 @@ class PartListController extends Controller
     |--------------------------------------------------------------------------
     */
     public function store(Request $request)
-    {
-        $request->validate([
-            'permintaan_id'   => 'required|exists:permintaan,permintaan_id',
-            'nama_part'       => 'required|string|max:150',
-            'material'        => 'nullable|string|max:100',
-            'dimensi'         => 'nullable|string|max:100',
-            'dimensi_belanja' => 'nullable|string|max:100',
-            'quantity'        => 'required|integer|min:1',
-            'purchase'        => 'required|string',
-            'berat'           => 'nullable|numeric|min:0',
-            'status_part'     => 'required|in:draft,belum_dibeli,dibeli,indent,ready',
-        ], [
-            'permintaan_id.required' => 'Permintaan wajib dipilih.',
-            'nama_part.required'     => 'Nama part wajib diisi.',
-            'quantity.required'      => 'Quantity wajib diisi.',
-            'unit.required'          => 'Unit wajib diisi.',
-            'status_part.required'   => 'Status wajib dipilih.',
+{
+    $validated = $request->validate([
+        'permintaan_id'   => 'required|exists:permintaan,permintaan_id',
+        'nama_part'       => 'required|string|max:150',
+        'material'        => 'nullable|string|max:100',
+        'dimensi'         => 'nullable|string|max:100',
+        'dimensi_belanja' => 'nullable|string|max:100',
+        'quantity'        => 'required|integer|min:1',
+        'purchase'        => 'required|string',
+        'berat'           => 'nullable|numeric|min:0',
+        'status_part'     => 'required|in:draft,belum_dibeli,dibeli,indent,ready',
+    ]);
+
+    $validated['kode_part'] = PartList::generateKodePart($request->permintaan_id);
+
+    // ✅ Pisah create dan cek hasilnya
+    $part = new PartList();
+    $part->fill($validated);
+    $part->save();
+
+    if ($request->ajax() || $request->wantsJson()) {
+        return response()->json([
+            'success'     => true,
+            'partlist_id' => $part->partlist_id,
+            'message'     => 'Part berhasil ditambahkan.',
         ]);
-
-        $data               = $request->all();
-        $data['kode_part']  = PartList::generateKodePart($request->permintaan_id);
-
-        PartList::create($data);
-
-        $role = auth()->user()->role;
-
-        if ($role === 'engineer') {
-            return redirect()->route('engineer.parts.index')
-                ->with('success', 'Part berhasil ditambahkan.');
-        }
-
-        return redirect()->route('admin.permintaan.index')
-            ->with('success', 'Part berhasil ditambahkan.');
     }
+
+    return redirect()->route('admin.permintaan.index')
+        ->with('success', 'Part berhasil ditambahkan.');
+}
 
     /*
     |--------------------------------------------------------------------------

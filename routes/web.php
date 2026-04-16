@@ -40,6 +40,8 @@ Route::get('/', function () {
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
 
     Route::get('/dashboard', [DashboardController::class, 'admin'])->name('dashboard');
+    Route::patch('/admin/dashboard/tracking/{tracking_id}', [DashboardController::class, 'updateTracking']);
+    Route::post('/admin/dashboard/tracking/{tracking_id}/sync-po', [DashboardController::class, 'syncPo']);
 
     // Mesin Management
     Route::resource('mesin', MesinController::class);
@@ -61,7 +63,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::get('planning/{id}',    [PlanningController::class, 'show'])->name('planning.show');
     Route::put('planning/{id}',    [PlanningController::class, 'update'])->name('planning.update');
     Route::delete('planning/{id}', [PlanningController::class, 'destroy'])->name('planning.destroy');
-
+    Route::post('/admin/planning/update-actual/{id}', [PlanningController::class, 'updateActual'])->name('admin.planning.updateActual');
     // Schedule Overview
     Route::get('schedule', [ScheduleController::class, 'index'])->name('schedule.index');
 

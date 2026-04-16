@@ -1,5 +1,5 @@
 @extends('layouts.app')
-
+//planning.blade.php
 @section('title', 'Production Planning')
 
 @push('styles')

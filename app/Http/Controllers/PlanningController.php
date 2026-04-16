@@ -1,5 +1,5 @@
 <?php
-
+//planningcontroller
 namespace App\Http\Controllers;
 
 use App\Models\Mesin;
@@ -65,6 +65,7 @@ public function index()
             'nama_activity' => 'required|string|max:255',
             'pic'           => 'required|string|max:100',
             'tanggal_plan'  => 'required|date',
+            'tanggal_actual' => 'nullable|date',
             'request_id'    => 'nullable|string|max:50',
             'partlist_id'   => 'nullable|exists:part_list,partlist_id',
         ], [
@@ -80,6 +81,7 @@ public function index()
             'proses_nama'  => $request->nama_activity,
             'pic'          => $request->pic,
             'tanggal_plan' => $request->tanggal_plan,
+            'tanggal_actual' => $request->tanggal_actual ?? null,
             'request_id'   => $request->request_id ?? null,
             'status'       => 'pending',
         ]);
@@ -101,24 +103,44 @@ public function index()
             'nama_activity' => 'required|string|max:255',
             'pic'           => 'required|string|max:100',
             'tanggal_plan'  => 'required|date',
+            'tanggal_actual' => 'nullable|date',
             'partlist_id'   => 'nullable|exists:part_list,partlist_id',
         ], [
             'nama_activity.required' => 'Nama activity wajib diisi.',
             'pic.required'           => 'PIC wajib diisi.',
             'tanggal_plan.required'  => 'Tanggal plan wajib diisi.',
+            'tanggal_actual.required'  => 'Tanggal plan wajib diisi.',
         ]);
 
         $activity->update([
             'proses_nama'  => $request->nama_activity,
             'pic'          => $request->pic,
             'tanggal_plan' => $request->tanggal_plan,
+            'tanggal_actual' => $request->tanggal_actual,
             'partlist_id'  => $request->partlist_id ?? $activity->partlist_id,
         ]);
 
         return redirect()->route('admin.planning.show', $activity->mesin_id)
             ->with('success', 'Activity berhasil diperbarui.');
     }
+    public function updateActual(Request $request, $id)
+        {
+            $request->validate([
+                'tanggal_actual' => 'required|date'
+            ]);
 
+            $proses = ProsesMfg::with('schedule')->findOrFail($id);
+
+            if (!$proses->schedule) {
+                return back()->with('error', 'Schedule tidak ditemukan');
+            }
+
+            $proses->schedule->update([
+                'tanggal_act' => $request->tanggal_actual
+            ]);
+
+            return back()->with('success', 'Tanggal actual berhasil diupdate');
+        }
     /*
     |--------------------------------------------------------------------------
     | DESTROY — Hapus activity

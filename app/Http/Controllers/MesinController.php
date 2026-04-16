@@ -1,5 +1,5 @@
 <?php
-
+//MesinController.php
 namespace App\Http\Controllers;
 
 use App\Models\Mesin;

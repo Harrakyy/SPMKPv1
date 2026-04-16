@@ -50,4 +50,8 @@ class ProsesMfg extends Model
         // FK di proses_mfg = partlist_id, PK di part_list = partlist_id
         return $this->belongsTo(PartList::class, 'partlist_id', 'partlist_id');
     }
-}
+    public function schedule()
+    {
+        return $this->hasOne(Schedule::class, 'proses_id', 'proses_id');
+    }
+} 

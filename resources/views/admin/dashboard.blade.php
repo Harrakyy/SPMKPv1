@@ -2,141 +2,295 @@
 
 @section('content')
 <div class="container-fluid p-0">
+
+    {{-- ── HEADER ─────────────────────────────────────────────────────────── --}}
     <div class="mb-4">
         <h3 class="fw-bold mb-1">Admin Dashboard</h3>
         <p class="text-muted">Gambaran umum pemantauan & pengendalian produksi — {{ now()->translatedFormat('d F Y') }}</p>
     </div>
 
-    {{-- STAT CARDS: PERMINTAAN & MESIN --}}
-  {{-- <div class="row g-4 mb-4">
-        <div class="col-md-3">
-            <div class="custom-card card-border-blue">
-                <div class="icon-box icon-blue"><i class="bi bi-file-earmark-text"></i></div>
-                <p class="text-muted mb-1" style="font-size:14px;">Total Permintaan</p>
-                <h2 class="fw-bold mb-0">{{ $data['total_permintaan'] }}</h2>
-            </div>
+    {{-- ── SECTION: PRODUCTION TRACKING ──────────────────────────────────── --}}
+    <div class="mb-3 d-flex justify-content-between align-items-center">
+        <div>
+            <h5 class="fw-bold mb-0">Production Tracking</h5>
+            <small class="text-muted">Klik mesin untuk melihat detail tracking progress</small>
         </div>
-        <div class="col-md-3">
-            <div class="custom-card card-border-yellow">
-                <div class="icon-box icon-yellow"><i class="bi bi-clock"></i></div>
-                <p class="text-muted mb-1" style="font-size:14px;">Dalam Proses</p>
-                <h2 class="fw-bold mb-0">{{ $data['permintaan_inprogress'] }}</h2>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="custom-card card-border-orange">
-                <div class="icon-box icon-orange"><i class="bi bi-exclamation-circle"></i></div>
-                <p class="text-muted mb-1" style="font-size:14px;">Mesin Maintenance</p>
-                <h2 class="fw-bold mb-0">{{ $data['mesin_maintenance'] }}</h2>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="custom-card card-border-green">
-                <div class="icon-box icon-green"><i class="bi bi-check-circle"></i></div>
-                <p class="text-muted mb-1" style="font-size:14px;">Mesin Aktif</p>
-                <h2 class="fw-bold mb-0">{{ $data['mesin_aktif'] }}</h2>
-            </div>
-        </div>
-    </div>--}}
+        <a href="{{ route('admin.planning.index') }}" class="btn btn-sm btn-outline-primary">
+            <i class="bi bi-grid me-1"></i> Lihat Planning
+        </a>
+    </div>
 
-    {{-- STAT CARDS: PLANNING / ACTIVITY 
-    <div class="row g-4 mb-4">
+    {{-- ── MACHINE CARDS (mirip planning.blade.php) ────────────────────────── --}}
+    <div class="row g-3 mb-4">
+        @forelse($data['mesins'] as $mesin)
         <div class="col-md-4">
-            <div class="custom-card card-border-blue">
-                <div class="icon-box icon-blue"><i class="bi bi-list-task"></i></div>
-                <p class="text-muted mb-1" style="font-size:14px;">Total Activity</p>
-                <h2 class="fw-bold mb-0">{{ $data['total_activity'] }}</h2>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="custom-card card-border-yellow">
-                <div class="icon-box icon-yellow"><i class="bi bi-hourglass-split"></i></div>
-                <p class="text-muted mb-1" style="font-size:14px;">Activity Running</p>
-                <h2 class="fw-bold mb-0">{{ $data['activity_running'] }}</h2>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="custom-card card-border-green">
-                <div class="icon-box icon-green"><i class="bi bi-check2-all"></i></div>
-                <p class="text-muted mb-1" style="font-size:14px;">Activity Done</p>
-                <h2 class="fw-bold mb-0">{{ $data['activity_done'] }}</h2>
-            </div>
-        </div>
-    </div>--}}
+            <div class="machine-track-card" onclick="toggleTrackingTable('{{ $mesin['mesin_id'] }}')"
+                 id="card-{{ $mesin['mesin_id'] }}">
 
-    {{-- CHARTS 
-    <div class="row g-4 mb-4">
-        <div class="col-lg-8">
-            <div class="custom-card border-0">
-                <div class="d-flex justify-content-between align-items-center mb-4">
+                <div class="d-flex justify-content-between align-items-start mb-1">
+                    <h6 class="fw-bold mb-0">{{ $mesin['nama_mesin'] }}</h6>
+                    <span class="status-active-badge
+                        {{ $mesin['status'] === 'active' ? 'badge-active' :
+                           ($mesin['status'] === 'maintenance' ? 'badge-maint' : 'badge-inactive') }}">
+                        {{ ucfirst($mesin['status']) }}
+                    </span>
+                </div>
+
+                @if($mesin['nomor_permintaan'] !== '-')
+                    <span class="req-badge">
+                        <i class="bi bi-link-45deg"></i>
+                        {{ $mesin['nomor_permintaan'] }}
+                    </span>
+                @endif
+
+                <div class="d-flex justify-content-between align-items-center mb-3 mt-2">
                     <div>
-                        <h5 class="fw-bold mb-0">Tren Produksi</h5>
-                        <small class="text-muted">Kinerja produksi dari waktu ke waktu</small>
+                        <div style="font-size:0.8rem;color:#666;">{{ $mesin['jenis_proses'] ?? '-' }}</div>
+                        <div style="font-size:0.75rem;color:#999;">{{ $mesin['lokasi'] ?? '-' }}</div>
                     </div>
-                    <div class="btn-group" role="group">
-                        <button type="button" class="btn chart-toggle-btn active">Bulanan</button>
-                        <button type="button" class="btn chart-toggle-btn">Triwulan</button>
-                        <button type="button" class="btn chart-toggle-btn">Tahunan</button>
-                    </div>
+                    <span class="activity-badge">{{ $mesin['total_activity'] }} Activity</span>
                 </div>
-                <canvas id="trenProduksiChart" height="100"></canvas>
-                <div class="text-center mt-3" style="font-size:12px;">
-                    <span class="me-3"><span class="dot bg-primary"></span> Jumlah Permintaan</span>
-                    <span><span class="dot bg-warning"></span> Garis Tren</span>
+
+                {{-- Progress bar mini --}}
+                @php
+                    $total = max($mesin['total_activity'], 1);
+                    $pct   = round(($mesin['done_count'] / $total) * 100);
+                @endphp
+                <div class="progress mb-2" style="height:4px;border-radius:4px;">
+                    <div class="progress-bar bg-success" style="width:{{ $pct }}%"></div>
+                </div>
+
+                <div class="d-flex justify-content-between" style="font-size:0.78rem;color:#888;">
+                    <span><span style="color:#0d6efd;">●</span> Plan: <strong class="text-primary">{{ $mesin['plan_count'] }}</strong></span>
+                    <span><span style="color:#fd7e14;">●</span> Act: <strong style="color:#fd7e14;">{{ $mesin['act_count'] }}</strong></span>
+                    <span><span style="color:#198754;">●</span> Done: <strong class="text-success">{{ $mesin['done_count'] }}</strong></span>
+                    <span class="ms-auto text-muted">{{ $pct }}%</span>
+                </div>
+
+                {{-- Indikator tanggal trial & delivery (ringkasan) --}}
+                <div class="d-flex gap-2 mt-2" style="font-size:0.73rem;">
+                    <span class="track-pill {{ $mesin['tanggal_trial'] ? 'pill-filled' : 'pill-empty' }}">
+                        <i class="bi bi-tools me-1"></i>
+                        Trial: {{ $mesin['tanggal_trial'] ? \Carbon\Carbon::parse($mesin['tanggal_trial'])->format('d/m/Y') : '—' }}
+                    </span>
+                    <span class="track-pill {{ $mesin['tanggal_delivery'] ? 'pill-filled' : 'pill-empty' }}">
+                        <i class="bi bi-truck me-1"></i>
+                        Delivery: {{ $mesin['tanggal_delivery'] ? \Carbon\Carbon::parse($mesin['tanggal_delivery'])->format('d/m/Y') : '—' }}
+                    </span>
+                </div>
+
+                {{-- Arrow indicator --}}
+                <div class="text-end mt-1">
+                    <i class="bi bi-chevron-down card-arrow" id="arrow-{{ $mesin['mesin_id'] }}"
+                       style="font-size:0.8rem;color:#aaa;transition:transform 0.25s;"></i>
                 </div>
             </div>
-        </div>--}}
-
-        {{--<div class="col-lg-4">
-            <div class="custom-card border-0">
-                <div class="d-flex justify-content-between align-items-start mb-4">
-                    <div>
-                        <h5 class="fw-bold mb-0">Tren Aktivitas Produksi</h5>
-                        <small class="text-muted">Distribusi berdasarkan status</small>
-                    </div>
-                    <a href="{{ route('admin.permintaan.index') }}"
-                       class="text-primary text-decoration-none" style="font-size:13px;">
-                        Detail <i class="bi bi-arrow-right"></i>
-                    </a>
-                </div>
-                <div class="d-flex align-items-center justify-content-between h-100">
-                    <div style="width:200px;">
-                        <canvas id="aktivitasChart"></canvas>
-                    </div>
-                    <div class="d-flex flex-column gap-2">
-                        @php
-                            $statusColors = [
-                                'draft'       => '#adb5bd',
-                                'submitted'   => '#0d6efd',
-                                'approved'    => '#20c997',
-                                'in_progress' => '#ffc107',
-                                'completed'   => '#198754',
-                                'rejected'    => '#dc3545',
-                            ];
-                        @endphp
-                        @forelse($data['permintaan_by_status'] as $status => $jumlah)
-                        <div class="legend-item"
-                             onclick="window.location.href='{{ route('admin.permintaan.index') }}'"
-                             title="Lihat di Request Management"
-                             style="cursor:pointer;">
-                            <small class="text-muted">
-                                <span class="dot"
-                                      style="background:{{ $statusColors[$status] ?? '#0d6efd' }}"></span>
-                                {{ ucfirst(str_replace('_', ' ', $status)) }}
-                            </small>
-                            <h5 class="fw-bold mb-0 mt-1">{{ $jumlah }}</h5>
-                        </div>
-                        @empty
-                            <p class="text-muted" style="font-size:12px;">Belum ada data</p>
-                        @endforelse
-                    </div>
-                </div>
+        </div>
+        @empty
+        <div class="col-12">
+            <div class="text-center text-muted py-5">
+                <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+                Belum ada mesin terdaftar.
             </div>
-        </div>--}}
-    </div> 
+        </div>
+        @endforelse
+    </div>
 
-    {{-- TABEL GABUNGAN REQUEST & PLANNING --}}
-    <div class="row">
+    {{-- ── TRACKING TABLES (collapsed, muncul saat kartu diklik) ──────────── --}}
+    @foreach($data['mesins'] as $mesin)
+    <div class="tracking-table-wrapper" id="tracking-{{ $mesin['mesin_id'] }}" style="display:none;">
+        <div class="custom-card border-0 mb-4">
+
+            {{-- Header tabel --}}
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <h6 class="fw-bold mb-0">
+                        <i class="bi bi-table me-2 text-primary"></i>
+                        Tracking: {{ $mesin['nama_mesin'] }}
+                        @if($mesin['nomor_permintaan'] !== '-')
+                            <span class="req-badge ms-2">{{ $mesin['nomor_permintaan'] }}</span>
+                        @endif
+                    </h6>
+                    <small class="text-muted">{{ $mesin['jenis_produk'] }}</small>
+                </div>
+                <button class="btn btn-sm btn-light border"
+                        onclick="toggleTrackingTable('{{ $mesin['mesin_id'] }}')">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+
+            {{-- TABLE --}}
+            <div class="table-responsive">
+                <table class="table table-sm tracking-tbl mb-0">
+                    <thead>
+                        <tr>
+                            <th>Tanggal PO</th>
+                            <th>PO Mekanik</th>
+                            <th>PO Elektrikal</th>
+                            <th>Assy Mekanik</th>
+                            <th>Assy Elektrikal</th>
+                            <th>Trial / Install</th>
+                            <th>Delivery</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr id="row-{{ $mesin['mesin_id'] }}">
+
+                            {{-- Tanggal PO (dari tanggal_permintaan) --}}
+                            <td>
+                                @if($mesin['tanggal_po'])
+                                    <span class="date-chip date-chip-blue">
+                                        <i class="bi bi-calendar3 me-1"></i>
+                                        {{ \Carbon\Carbon::parse($mesin['tanggal_po'])->format('d/m/Y') }}
+                                    </span>
+                                @else
+                                    <span class="text-muted">—</span>
+                                @endif
+                            </td>
+
+                          {{-- PO Mekanik --}}
+                            <td>
+                                @if($mesin['po_mekanik_count'] > 0)
+                                    <div class="d-flex flex-column gap-1">
+                                        <span class="buyer-badge buyer-mek">
+                                            <i class="bi bi-wrench me-1"></i>
+                                            {{ $mesin['po_mekanik_count'] }} part
+                                        </span>
+                                        <small class="text-muted" style="font-size:0.7rem; line-height:1.3;">
+                                            {{ $mesin['po_mekanik'] }}
+                                        </small>
+                                    </div>
+                                @else
+                                    <span class="text-muted">—</span>
+                                @endif
+                            </td>
+
+                            {{-- PO Elektrikal --}}
+                            <td>
+                                @if($mesin['po_elektrikal_count'] > 0)
+                                    <div class="d-flex flex-column gap-1">
+                                        <span class="buyer-badge buyer-elek">
+                                            <i class="bi bi-lightning me-1"></i>
+                                            {{ $mesin['po_elektrikal_count'] }} part
+                                        </span>
+                                        <small class="text-muted" style="font-size:0.7rem; line-height:1.3;">
+                                            {{ $mesin['po_elektrikal'] }}
+                                        </small>
+                                    </div>
+                                @else
+                                    <span class="text-muted">—</span>
+                                @endif
+                            </td>
+
+                            {{-- Assy Mekanik (tanggal_actual dari schedule) --}}
+                            <td>
+                                @if($mesin['assy_mekanik'])
+                                    <span class="date-chip date-chip-orange">
+                                        <i class="bi bi-wrench me-1"></i>
+                                        {{ \Carbon\Carbon::parse($mesin['assy_mekanik'])->format('d/m/Y') }}
+                                    </span>
+                                @else
+                                    <span class="text-muted">—</span>
+                                @endif
+                            </td>
+
+                            {{-- Assy Elektrikal (tanggal_actual dari schedule) --}}
+                            <td>
+                                @if($mesin['assy_elektrikal'])
+                                    <span class="date-chip date-chip-purple">
+                                        <i class="bi bi-lightning me-1"></i>
+                                        {{ \Carbon\Carbon::parse($mesin['assy_elektrikal'])->format('d/m/Y') }}
+                                    </span>
+                                @else
+                                    <span class="text-muted">—</span>
+                                @endif
+                            </td>
+
+                            {{-- Trial / Install (EDITABLE) --}}
+                            <td>
+                                <div class="editable-date-cell" id="trial-display-{{ $mesin['mesin_id'] }}">
+                                    @if($mesin['tanggal_trial'])
+                                        <span class="date-chip date-chip-green">
+                                            <i class="bi bi-tools me-1"></i>
+                                            {{ \Carbon\Carbon::parse($mesin['tanggal_trial'])->format('d/m/Y') }}
+                                        </span>
+                                    @else
+                                        <span class="empty-date-btn"
+                                              onclick="openDateEdit('{{ $mesin['mesin_id'] }}', 'trial')">
+                                            <i class="bi bi-plus-circle me-1"></i>Set Tanggal
+                                        </span>
+                                    @endif
+                                    <button class="btn-edit-date ms-1"
+                                            onclick="openDateEdit('{{ $mesin['mesin_id'] }}', 'trial')"
+                                            title="Edit tanggal trial">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                </div>
+                                {{-- Input (hidden) --}}
+                                <div class="date-input-wrap" id="trial-input-{{ $mesin['mesin_id'] }}" style="display:none;">
+                                    <input type="date" class="form-control form-control-sm"
+                                           id="trial-val-{{ $mesin['mesin_id'] }}"
+                                           value="{{ $mesin['tanggal_trial'] ?? '' }}">
+                                    <div class="d-flex gap-1 mt-1">
+                                        <button class="btn btn-xs btn-primary"
+                                                onclick="saveDate('{{ $mesin['mesin_id'] }}', 'trial')">
+                                            <i class="bi bi-check"></i>
+                                        </button>
+                                        <button class="btn btn-xs btn-light border"
+                                                onclick="cancelDateEdit('{{ $mesin['mesin_id'] }}', 'trial')">
+                                            <i class="bi bi-x"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </td>
+
+                            {{-- Delivery (EDITABLE) --}}
+                            <td>
+                                <div class="editable-date-cell" id="delivery-display-{{ $mesin['mesin_id'] }}">
+                                    @if($mesin['tanggal_delivery'])
+                                        <span class="date-chip date-chip-teal">
+                                            <i class="bi bi-truck me-1"></i>
+                                            {{ \Carbon\Carbon::parse($mesin['tanggal_delivery'])->format('d/m/Y') }}
+                                        </span>
+                                    @else
+                                        <span class="empty-date-btn"
+                                              onclick="openDateEdit('{{ $mesin['mesin_id'] }}', 'delivery')">
+                                            <i class="bi bi-plus-circle me-1"></i>Set Tanggal
+                                        </span>
+                                    @endif
+                                    <button class="btn-edit-date ms-1"
+                                            onclick="openDateEdit('{{ $mesin['mesin_id'] }}', 'delivery')"
+                                            title="Edit tanggal delivery">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                </div>
+                                <div class="date-input-wrap" id="delivery-input-{{ $mesin['mesin_id'] }}" style="display:none;">
+                                    <input type="date" class="form-control form-control-sm"
+                                           id="delivery-val-{{ $mesin['mesin_id'] }}"
+                                           value="{{ $mesin['tanggal_delivery'] ?? '' }}">
+                                    <div class="d-flex gap-1 mt-1">
+                                        <button class="btn btn-xs btn-primary"
+                                                onclick="saveDate('{{ $mesin['mesin_id'] }}', 'delivery')">
+                                            <i class="bi bi-check"></i>
+                                        </button>
+                                        <button class="btn btn-xs btn-light border"
+                                                onclick="cancelDateEdit('{{ $mesin['mesin_id'] }}', 'delivery')">
+                                            <i class="bi bi-x"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </td>
+
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    @endforeach
+
+    {{-- ── TABEL GABUNGAN REQUEST & PLANNING ───────────────────────────────── 
+    <div class="row mt-2">
         <div class="col-12">
             <div class="custom-card border-0">
                 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -229,85 +383,276 @@
                 </div>
             </div>
         </div>
-    </div>
+    </div>--}}
 
 </div>
+
+{{-- Toast Notification --}}
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index:9999;">
+    <div id="saveToast" class="toast align-items-center text-white border-0" role="alert" style="min-width:220px;">
+        <div class="d-flex">
+            <div class="toast-body fw-semibold" id="toastMsg"></div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto"
+                    data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+</div>
+
 @endsection
 
+@push('styles')
+<style>
+    /* ── Machine Cards ─────────────────────────────────── */
+    .machine-track-card {
+        background: #fff;
+        border-radius: 12px;
+        border: 1px solid #e0e0e0;
+        padding: 18px;
+        cursor: pointer;
+        transition: box-shadow 0.2s, transform 0.2s, border-color 0.2s;
+        height: 100%;
+    }
+    .machine-track-card:hover {
+        box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+        transform: translateY(-2px);
+        border-color: #bfdbfe;
+    }
+    .machine-track-card.active-card {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 3px rgba(13,110,253,0.1);
+    }
+    .machine-track-card.active-card .card-arrow {
+        transform: rotate(180deg);
+        color: #0d6efd !important;
+    }
+
+    /* ── Status badges ─────────────────────────────────── */
+    .status-active-badge {
+        font-size: 0.7rem; padding: 3px 8px; border-radius: 4px; font-weight: 500;
+    }
+    .badge-active   { background:#d1e7dd; color:#0f5132; }
+    .badge-maint    { background:#fff3cd; color:#856404; }
+    .badge-inactive { background:#f8d7da; color:#842029; }
+
+    .req-badge {
+        background:#fff3cd; color:#856404;
+        font-size:0.7rem; padding:3px 8px;
+        border-radius:4px; display:inline-block;
+    }
+    .activity-badge {
+        background:#cfe2f3; color:#084298;
+        font-size:0.7rem; padding:3px 8px; border-radius:4px;
+    }
+
+    /* ── Track pill (ringkasan di kartu) ───────────────── */
+    .track-pill {
+        padding: 2px 8px; border-radius: 20px; font-size: 0.7rem;
+    }
+    .pill-filled { background:#d1fae5; color:#065f46; }
+    .pill-empty  { background:#f1f5f9; color:#94a3b8; border: 1px dashed #cbd5e1; }
+
+    /* ── Tracking Table ────────────────────────────────── */
+    .tracking-table-wrapper {
+        animation: slideDown 0.25s ease;
+    }
+    @keyframes slideDown {
+        from { opacity:0; transform:translateY(-8px); }
+        to   { opacity:1; transform:translateY(0); }
+    }
+    .tracking-tbl thead th {
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        color: #888;
+        letter-spacing: 0.4px;
+        border-bottom: 2px solid #eee;
+        padding: 10px 12px;
+        white-space: nowrap;
+        font-weight: 600;
+    }
+    .tracking-tbl tbody td {
+        font-size: 0.88rem;
+        padding: 12px;
+        vertical-align: middle;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    /* ── Date chips ────────────────────────────────────── */
+    .date-chip {
+        display: inline-flex; align-items: center;
+        font-size: 0.78rem; padding: 3px 10px;
+        border-radius: 20px; font-weight: 500; white-space: nowrap;
+    }
+    .date-chip-blue   { background:#dbeafe; color:#1e40af; }
+    .date-chip-orange { background:#ffedd5; color:#9a3412; }
+    .date-chip-purple { background:#ede9fe; color:#5b21b6; }
+    .date-chip-green  { background:#dcfce7; color:#166534; }
+    .date-chip-teal   { background:#ccfbf1; color:#134e4a; }
+
+    /* ── Buyer badges ──────────────────────────────────── */
+    .buyer-badge {
+        display: inline-flex; align-items: center;
+        font-size: 0.78rem; padding: 3px 10px;
+        border-radius: 20px; font-weight: 500;
+    }
+    .buyer-mek  { background:#e0f2fe; color:#0369a1; }
+    .buyer-elek { background:#fce7f3; color:#9d174d; }
+
+    /* ── Editable date cell ────────────────────────────── */
+    .editable-date-cell {
+        display: inline-flex; align-items: center; gap: 4px;
+    }
+    .btn-edit-date {
+        background: none; border: none; padding: 2px 4px;
+        color: #aaa; font-size: 0.75rem; cursor: pointer;
+        opacity: 0; transition: opacity 0.15s;
+    }
+    .tracking-tbl tbody tr:hover .btn-edit-date { opacity: 1; }
+    .btn-edit-date:hover { color: #0d6efd; }
+
+    .empty-date-btn {
+        color: #aaa; font-size: 0.78rem;
+        cursor: pointer; white-space: nowrap;
+        border: 1px dashed #d1d5db; border-radius: 20px;
+        padding: 2px 10px; transition: 0.15s;
+    }
+    .empty-date-btn:hover { color: #0d6efd; border-color: #0d6efd; background: #f0f7ff; }
+
+    .date-input-wrap { min-width: 130px; }
+
+    .btn-xs {
+        padding: 2px 8px; font-size: 0.75rem;
+        border-radius: 4px; line-height: 1.4;
+    }
+
+    /* ── Custom card (existing style) ─────────────────── */
+    .custom-card {
+        background: #fff;
+        border-radius: 12px;
+        border: 1px solid #e0e0e0;
+        padding: 20px;
+    }
+</style>
+@endpush
+
 @push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    const permintaanByMonth  = @json($data['permintaan_by_month']);
-    const permintaanByStatus = @json($data['permintaan_by_status']);
+    // ── Toggle tracking table ──────────────────────────────────────────────
+    function toggleTrackingTable(mesinId) {
+        const wrapper = document.getElementById('tracking-' + mesinId);
+        const card    = document.getElementById('card-' + mesinId);
+        const isOpen  = wrapper.style.display !== 'none';
 
-    const months  = Object.keys(permintaanByMonth);
-    const monthly = Object.values(permintaanByMonth);
+        // Tutup semua dulu
+        document.querySelectorAll('.tracking-table-wrapper').forEach(el => {
+            el.style.display = 'none';
+        });
+        document.querySelectorAll('.machine-track-card').forEach(el => {
+            el.classList.remove('active-card');
+        });
 
-    const statusLabels = Object.keys(permintaanByStatus);
-    const statusValues = Object.values(permintaanByStatus);
-    const colorMap = {
-        'draft'      : '#adb5bd',
-        'submitted'  : '#0d6efd',
-        'approved'   : '#20c997',
-        'in_progress': '#ffc107',
-        'completed'  : '#198754',
-        'rejected'   : '#dc3545',
-    };
-    const bgColors = statusLabels.map(s => colorMap[s] ?? '#0d6efd');
+        if (!isOpen) {
+            wrapper.style.display = 'block';
+            card.classList.add('active-card');
+            // Scroll ke tabel
+            setTimeout(() => {
+                wrapper.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }, 50);
+        }
+    }
 
-    new Chart(document.getElementById('trenProduksiChart').getContext('2d'), {
-        type: 'bar',
-        data: {
-            labels: months.map(m => {
-                const d = new Date(m + '-01');
-                return d.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
-            }),
-            datasets: [
-                {
-                    type: 'line',
-                    label: 'Garis Tren',
-                    data: monthly,
-                    borderColor: '#ffc107',
-                    backgroundColor: '#ffc107',
-                    borderWidth: 2, tension: 0.4,
-                    pointBackgroundColor: '#ffc107',
-                    pointBorderColor: '#fff',
-                    pointBorderWidth: 2, pointRadius: 4
-                },
-                {
-                    type: 'bar',
-                    label: 'Jumlah Permintaan',
-                    data: monthly,
-                    backgroundColor: '#0d6efd',
-                    borderRadius: 4, barPercentage: 0.6
+    // ── Open date edit ─────────────────────────────────────────────────────
+    function openDateEdit(mesinId, type) {
+        document.getElementById(type + '-display-' + mesinId).style.display  = 'none';
+        document.getElementById(type + '-input-' + mesinId).style.display    = 'block';
+        document.getElementById(type + '-val-' + mesinId).focus();
+    }
+
+    // ── Cancel date edit ───────────────────────────────────────────────────
+    function cancelDateEdit(mesinId, type) {
+        document.getElementById(type + '-input-' + mesinId).style.display   = 'none';
+        document.getElementById(type + '-display-' + mesinId).style.display = 'inline-flex';
+    }
+
+    // ── Save date via AJAX ─────────────────────────────────────────────────
+    function saveDate(mesinId, type) {
+        const val = document.getElementById(type + '-val-' + mesinId).value;
+
+        const body = {};
+        body['tanggal_' + type] = val;
+
+        fetch(`/admin/dashboard/tracking/${trackingId}`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            },
+            body: JSON.stringify(body),
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                // Update tampilan chip
+                const displayEl = document.getElementById(type + '-display-' + mesinId);
+                const formatted = val ? formatDate(val) : '—';
+                const icons     = { trial: 'bi-tools', delivery: 'bi-truck' };
+                const colors    = { trial: 'date-chip-green', delivery: 'date-chip-teal' };
+
+                if (val) {
+                    displayEl.innerHTML = `
+                        <span class="date-chip ${colors[type]}">
+                            <i class="bi ${icons[type]} me-1"></i>${formatted}
+                        </span>
+                        <button class="btn-edit-date ms-1" onclick="openDateEdit('${mesinId}', '${type}')" title="Edit">
+                            <i class="bi bi-pencil"></i>
+                        </button>`;
+                } else {
+                    displayEl.innerHTML = `
+                        <span class="empty-date-btn" onclick="openDateEdit('${mesinId}', '${type}')">
+                            <i class="bi bi-plus-circle me-1"></i>Set Tanggal
+                        </span>
+                        <button class="btn-edit-date ms-1" onclick="openDateEdit('${mesinId}', '${type}')">
+                            <i class="bi bi-pencil"></i>
+                        </button>`;
                 }
-            ]
-        },
-        options: {
-            responsive: true,
-            plugins: { legend: { display: false } },
-            scales: {
-                y: { beginAtZero: true, grid: { borderDash: [5,5], color: '#eee' }, border: { display: false } },
-                x: { grid: { display: false }, border: { display: false } }
-            }
-        }
-    });
 
-    new Chart(document.getElementById('aktivitasChart').getContext('2d'), {
-        type: 'doughnut',
-        data: {
-            labels: statusLabels,
-            datasets: [{
-                data: statusValues.length ? statusValues : [1],
-                backgroundColor: statusValues.length ? bgColors : ['#eee'],
-                borderWidth: 5, borderColor: '#fff', hoverOffset: 4
-            }]
-        },
-        options: {
-            responsive: true,
-            cutout: '70%',
-            plugins: { legend: { display: false } }
-        }
-    });
+                // Update pill di kartu mesin
+                updateCardPill(mesinId, type, val);
+
+                cancelDateEdit(mesinId, type);
+                showToast('✅ Tersimpan!', 'bg-success');
+            } else {
+                showToast('❌ Gagal menyimpan.', 'bg-danger');
+            }
+        })
+        .catch(() => showToast('❌ Terjadi kesalahan.', 'bg-danger'));
+    }
+
+    // ── Update pill ringkasan di kartu mesin ──────────────────────────────
+    function updateCardPill(mesinId, type, val) {
+        const card  = document.getElementById('card-' + mesinId);
+        if (!card) return;
+        const pills = card.querySelectorAll('.track-pill');
+        const idx   = type === 'trial' ? 0 : 1;
+        if (!pills[idx]) return;
+        const icons = { trial: '🔧', delivery: '🚚' };
+        const labels = { trial: 'Trial', delivery: 'Delivery' };
+        pills[idx].className = 'track-pill ' + (val ? 'pill-filled' : 'pill-empty');
+        pills[idx].innerHTML = `${labels[type]}: ${val ? formatDate(val) : '—'}`;
+    }
+
+    // ── Format date dd/mm/yyyy ─────────────────────────────────────────────
+    function formatDate(dateStr) {
+        if (!dateStr) return '—';
+        const [y, m, d] = dateStr.split('-');
+        return `${d}/${m}/${y}`;
+    }
+
+    // ── Toast ──────────────────────────────────────────────────────────────
+    function showToast(msg, bgClass) {
+        const el = document.getElementById('saveToast');
+        el.className = `toast align-items-center text-white border-0 ${bgClass}`;
+        document.getElementById('toastMsg').textContent = msg;
+        new bootstrap.Toast(el, { delay: 2500 }).show();
+    }
 </script>
 @endpush

@@ -45,4 +45,12 @@ class Mesin extends Model
     {
         return $this->hasMany(ProsesMfg::class, 'mesin_id', 'mesin_id');
     }
+    public function schedules()
+{
+    return $this->hasMany(Schedule::class, 'mesin_id', 'mesin_id');
+}
+public function productionTracking()
+{
+    return $this->hasOne(ProductionTracking::class, 'mesin_id', 'mesin_id');
+}
 }

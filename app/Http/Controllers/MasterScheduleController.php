@@ -1,5 +1,5 @@
 <?php
-//MasterScheduleController
+
 namespace App\Http\Controllers;
 
 use App\Models\ProsesMfg;

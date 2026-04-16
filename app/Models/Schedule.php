@@ -19,4 +19,8 @@ class Schedule extends Model
         'tanggal_selesai',
         'status'
     ];
+    public function proses()
+    {
+        return $this->belongsTo(ProsesMfg::class, 'proses_id', 'proses_id');
+    }
 }

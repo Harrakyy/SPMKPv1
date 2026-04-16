@@ -431,10 +431,10 @@
                             <label class="form-label-custom">
                                 Purchase By<span class="required-star">*</span>
                             </label>
-                            <select name="purchase_by" id="purchase_by_select"
+                            <select name="purchase" id="purchase_by_select"
                                     class="form-control form-control-custom" required>
                                 <option value="">-- Pilih Pembeli --</option>
-                                <option value="Material">Material</option>
+                                <option value="Material">Mechanic</option>
                                 <option value="Electric">Electric</option>
                             </select>
                         </div>
@@ -533,6 +533,10 @@
                             <div class="part-detail-value" id="detail-qty">-</div>
                         </div>
                         <div class="mb-3">
+                            <div class="part-detail-label">Purchase By</div>
+                            <div class="part-detail-value" id="purchase">-</div>
+                        </div>
+                        <div class="mb-3">
                             <div class="part-detail-label">Status</div>
                             <div id="detail-status-part">-</div>
                         </div>
@@ -609,27 +613,37 @@
     }
 
     function openAddPartModal() {
-    // Reset form setiap kali modal dibuka
     document.getElementById('addPartForm').reset();
-    document.getElementById('material_input').value = '';
+    document.getElementById('material_input').value  = '';
     document.getElementById('material_final').value  = '';
     document.getElementById('material_select').value = '';
+    // ✅ Reset purchase_by juga
+    document.getElementById('purchase_by_select').value = '';
     document.getElementById('add-part-permintaan-id').value = currentPermintaanId;
-    document.getElementById('addPartForm').action = `/admin/part-list`;
     new bootstrap.Modal(document.getElementById('addPartModal')).show();
 }
 
-// ── SUBMIT TAMBAH PART VIA AJAX ──
 function submitAddPart() {
     const form      = document.getElementById('addPartForm');
     const formData  = new FormData(form);
     const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
 
-    // Validasi material wajib diisi
-    if (!document.getElementById('material_final').value) {
+    // ✅ Validasi material
+    const materialFinal = document.getElementById('material_final').value.trim();
+    if (!materialFinal) {
         alert('Silakan pilih atau isi material terlebih dahulu.');
         return;
     }
+
+    // ✅ Validasi purchase_by (sering terlewat)
+    const purchaseBy = document.getElementById('purchase_by_select').value;
+    if (!purchaseBy) {
+        alert('Silakan pilih Purchase By.');
+        return;
+    }
+   
+    // ✅ Pastikan material_final terisi di FormData
+    formData.set('material', materialFinal);
 
     fetch('/admin/part-list', {
         method : 'POST',
@@ -639,15 +653,20 @@ function submitAddPart() {
         },
         body: formData
     })
-    .then(r => {
-        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    .then(async r => {
+        if (!r.ok) {
+            const errBody = await r.json().catch(() => ({}));
+            // ✅ Tampilkan error validasi spesifik dari backend
+            const messages = errBody.errors
+                ? Object.values(errBody.errors).flat().join('\n')
+                : (errBody.message ?? `HTTP ${r.status}`);
+            throw new Error(messages);
+        }
         return r.json();
     })
     .then(res => {
         if (res.success || res.partlist_id) {
-            // Tutup modal
             bootstrap.Modal.getInstance(document.getElementById('addPartModal')).hide();
-            // Reload tabel part
             loadPartList(currentPermintaanId);
         } else {
             alert('Gagal menyimpan part: ' + (res.message ?? 'Unknown error'));
@@ -655,7 +674,7 @@ function submitAddPart() {
     })
     .catch(err => {
         console.error('Submit error:', err);
-        alert('Terjadi kesalahan saat menyimpan. Cek console untuk detail.');
+        alert('Error:\n' + err.message);
     });
 }
     // ── LOAD PART LIST ──
@@ -701,6 +720,7 @@ function submitAddPart() {
                     <td>${p.dimensi ?? '-'}</td>
                     <td>${p.dimensi_belanja ?? '-'}</td>
                     <td>${p.quantity ?? '-'}</td>
+                    <td>${p.purchase ?? '-'}</td> 
                     <td>
                         <span class="status-badge ${statusBadgeClass[p.status_part] ?? 'status-draft'}">
                             ${statusLabel[p.status_part] ?? p.status_part}
@@ -734,6 +754,7 @@ function submitAddPart() {
                             <th>DIMENSION FINISH</th>
                             <th>DIMENSION RAW</th>
                             <th>QTY</th>
+                            <th>PURCHASE BY</th>
                             <th>STATUS</th>
                             <th>ACTIONS</th>
                         </tr>
@@ -772,6 +793,7 @@ function submitAddPart() {
         document.getElementById('detail-dimensi-finish').innerText = p.dimensi         ?? '-';
         document.getElementById('detail-dimensi-raw').innerText    = p.dimensi_belanja ?? '-';
         document.getElementById('detail-qty').innerText            = p.quantity        ?? '-';
+        document.getElementById('purchase').innerText = p.purchase ?? '-';
         document.getElementById('detail-catatan').innerText        = p.catatan         ?? '-';
         document.getElementById('detail-status-part').innerHTML    =
             `<span class="status-badge ${statusClass[p.status_part] ?? 'status-draft'}">

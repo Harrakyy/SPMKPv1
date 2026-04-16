@@ -1,5 +1,5 @@
 @extends('layouts.app')
-
+//planningshow.blade.php
 @section('title', 'Detail Planning - ' . $mesin->nama_mesin)
 
 @push('styles')
@@ -221,6 +221,13 @@
                 <input type="date" name="tanggal_plan"
                        class="form-control form-control-sm" required>
             </div>
+             <div class="col-md-6">
+                <label class="form-label" style="font-size:0.85rem;">
+                    Tanggal Actual
+                </label>
+                <input type="date" name="tanggal_actual"
+                       class="form-control form-control-sm">
+            </div>
             <div class="col-md-6">
                 <label class="form-label" style="font-size:0.85rem;">
                     Kode Mesin <span class="text-danger">*</span>
@@ -241,13 +248,13 @@
                 </label>
                 <select name="partlist_id" class="form-select form-select-sm"
                         {{ $partLists->isEmpty() ? 'disabled' : '' }}>
-                    <option value="">-- Pilih Part (opsional) --</option>
+                    <option value="">-- Pilih Part --</option>
                     @foreach($partLists as $part)
-                        <option value="{{ $part->part_list_id }}">
+                        <option value="{{ $part->partlist_id }}">
                             {{ $part->nama_part }}
                             @if($part->material) — {{ $part->material }} @endif
                             @if($part->dimensi) ({{ $part->dimensi }} @endif
-                            @if($part->purchase) {{ $part->purchase }}) @endif
+                            @if($part->purchase) ({{ $part->purchase }})) @endif
                         </option>
                     @endforeach
                 </select>
@@ -326,10 +333,11 @@
                 <td>
                     <i class="bi bi-pencil action-icon icon-edit" title="Edit"
                        onclick="openEditActivity(
-                           {{ $item->mfg_id }},
+                           '{{ $item->mfg_id }}',
                            '{{ addslashes($item->proses_nama) }}',
                            '{{ addslashes($item->pic ?? '') }}',
-                           '{{ $item->tanggal_plan }}'
+                           '{{ \Carbon\Carbon::parse($item->tanggal_plan)->format('Y-m-d') }}',
+                           '{{ $item->tanggal_actual ? \Carbon\Carbon::parse($item->tanggal_actual)->format('Y-m-d') : '' }}'
                        )"></i>
                     <i class="bi bi-trash action-icon icon-delete" title="Hapus"
                        onclick="confirmDeleteActivity({{ $item->mfg_id }})"></i>
@@ -398,6 +406,11 @@
                     <div class="mb-4">
                         <label class="form-label">Tanggal Plan <span class="text-danger">*</span></label>
                         <input type="date" name="tanggal_plan" id="edit-date"
+                               class="form-control" required>
+                    </div>
+                        <div class="mb-4">
+                        <label class="form-label">Tanggal Actual <span class="text-danger">*</span></label>
+                        <input type="date" name="tanggal_actual" id="edit-date-actual"
                                class="form-control" required>
                     </div>
                     <div class="d-flex justify-content-end gap-2 border-top pt-3">
@@ -469,10 +482,11 @@
         }
     }
 
-    function openEditActivity(id, name, pic, date) {
+    function openEditActivity(id, name, pic, date, actualDate) {
         document.getElementById('edit-act-name').value = name;
         document.getElementById('edit-pic').value      = pic;
         document.getElementById('edit-date').value     = date;
+        document.getElementById('edit-date-actual').value = actualDate ?? '';
         document.getElementById('editActivityForm').action = '/admin/planning/' + id;
         new bootstrap.Modal(document.getElementById('editActivityModal')).show();
     }
